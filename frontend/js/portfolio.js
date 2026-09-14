@@ -1,0 +1,282 @@
+// === ПОРТФЕЛЬ: УПРАВЛЕНИЕ И ВИЗУАЛИЗАЦИЯ ===
+
+let portfolioPieChart = null;
+let portfolioBarChart = null;
+
+// Загрузка данных портфеля
+window.loadPortfolio = async function() {
+  try {
+    const response = await fetch('http://localhost:8000/api/portfolio');
+    if (!response.ok) throw new Error('Failed to load portfolio');
+
+    const data = await response.json();
+    renderPortfolio(data);
+    updatePortfolioSummary(data);
+    renderPortfolioCharts(data);
+  } catch (error) {
+    console.error('Ошибка загрузки портфеля:', error);
+    document.getElementById('portfolio-tbody').innerHTML =
+      '<tr><td colspan="8" class="empty-state">Ошибка загрузки данных</td></tr>';
+  }
+};
+
+// Отрисовка таблицы позиций
+function renderPortfolio(data) {
+  const tbody = document.getElementById('portfolio-tbody');
+
+  if (!data.positions || data.positions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Портфель пуст. Добавьте первую позицию!</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.positions.map(pos => {
+    const pnlClass = pos.pnl >= 0 ? 'text-green' : 'text-red';
+    const pnlSign = pos.pnl >= 0 ? '+' : '';
+
+    return `
+      <tr>
+        <td><strong>${pos.symbol}</strong></td>
+        <td>${pos.quantity.toFixed(2)}</td>
+        <td>${pos.avg_price.toFixed(2)} ₽</td>
+        <td>${pos.current_price.toFixed(2)} ₽</td>
+        <td>${(pos.quantity * pos.current_price).toFixed(2)} ₽</td>
+        <td class="${pnlClass}">${pnlSign}${pos.pnl.toFixed(2)} ₽</td>
+        <td class="${pnlClass}">${pnlSign}${pos.pnl_pct.toFixed(2)}%</td>
+        <td>
+          <button class="btn-icon delete" onclick="deletePosition('${pos.symbol}')" title="Удалить">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Обновление сводной статистики
+function updatePortfolioSummary(data) {
+  document.getElementById('total-value').textContent = `${data.total_value.toFixed(2)} ₽`;
+  document.getElementById('total-invested').textContent = `${data.total_invested.toFixed(2)} ₽`;
+
+  const pnlEl = document.getElementById('total-pnl');
+  const pnlPctEl = document.getElementById('total-pnl-pct');
+
+  const pnlSign = data.total_pnl >= 0 ? '+' : '';
+  pnlEl.textContent = `${pnlSign}${data.total_pnl.toFixed(2)} ₽`;
+  pnlEl.className = `value ${data.total_pnl >= 0 ? 'text-green' : 'text-red'}`;
+
+  pnlPctEl.textContent = `${pnlSign}${data.total_pnl_pct.toFixed(2)}%`;
+  pnlPctEl.className = `sub-value ${data.total_pnl >= 0 ? 'text-green' : 'text-red'}`;
+
+  document.getElementById('total-positions').textContent = data.positions.length;
+}
+
+// Отрисовка графиков
+function renderPortfolioCharts(data) {
+  renderPieChart(data.positions);
+  renderBarChart(data.positions);
+}
+
+// Круговая диаграмма распределения
+function renderPieChart(positions) {
+  const ctx = document.getElementById('portfolio-pie-chart').getContext('2d');
+
+  if (portfolioPieChart) {
+    portfolioPieChart.destroy();
+  }
+
+  const labels = positions.map(p => p.symbol);
+  const values = positions.map(p => p.quantity * p.current_price);
+
+  const colors = [
+    '#2962ff', '#26a69a', '#ffca28', '#ef5350', '#ab47bc',
+    '#ff7043', '#5c6bc0', '#29b6f6', '#66bb6a', '#ffa726'
+  ];
+
+  portfolioPieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderColor: '#1e222d',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: '#d1d4dc',
+            font: { size: 12 },
+            padding: 15
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1e222d',
+          titleColor: '#d1d4dc',
+          bodyColor: '#d1d4dc',
+          borderColor: '#363a45',
+          borderWidth: 1,
+          callbacks: {
+            label: function(context) {
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${context.label}: ${value.toFixed(2)} ₽ (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Столбчатая диаграмма P&L
+function renderBarChart(positions) {
+  const ctx = document.getElementById('portfolio-bar-chart').getContext('2d');
+
+  if (portfolioBarChart) {
+    portfolioBarChart.destroy();
+  }
+
+  const labels = positions.map(p => p.symbol);
+  const pnlValues = positions.map(p => p.pnl);
+  const colors = pnlValues.map(pnl => pnl >= 0 ? '#26a69a' : '#ef5350');
+
+  portfolioBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'P&L (₽)',
+        data: pnlValues,
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#d1d4dc' }
+        },
+        tooltip: {
+          backgroundColor: '#1e222d',
+          titleColor: '#d1d4dc',
+          bodyColor: '#d1d4dc',
+          borderColor: '#363a45',
+          borderWidth: 1,
+          callbacks: {
+            label: function(context) {
+              const value = context.parsed.y;
+              const sign = value >= 0 ? '+' : '';
+              return `${sign}${value.toFixed(2)} ₽`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          grid: { color: '#2a2e39' },
+          ticks: { color: '#787b86' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#787b86' }
+        }
+      }
+    }
+  });
+}
+
+// Модальное окно добавления позиции
+window.openAddPositionModal = function() {
+  document.getElementById('add-position-modal').classList.add('active');
+  document.getElementById('position-symbol').value = '';
+  document.getElementById('position-quantity').value = '';
+  document.getElementById('position-avg-price').value = '';
+};
+
+window.closeAddPositionModal = function() {
+  document.getElementById('add-position-modal').classList.remove('active');
+};
+
+window.savePosition = async function() {
+  const symbol = document.getElementById('position-symbol').value.trim();
+  const quantity = parseFloat(document.getElementById('position-quantity').value);
+  const avgPrice = parseFloat(document.getElementById('position-avg-price').value);
+
+  if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
+    alert('Пожалуйста, заполните все поля корректно');
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:8000/api/portfolio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, quantity, avg_price: avgPrice })
+    });
+
+    if (!response.ok) throw new Error('Failed to add position');
+
+    closeAddPositionModal();
+    await loadPortfolio();
+    log(`Добавлена позиция: ${symbol}`, 'success');
+  } catch (error) {
+    console.error('Ошибка добавления позиции:', error);
+    alert('Ошибка при добавлении позиции');
+  }
+};
+
+// Удаление позиции
+window.deletePosition = async function(symbol) {
+  if (!confirm(`Удалить позицию ${symbol}?`)) return;
+
+  try {
+    const response = await fetch(`http://localhost:8000/api/portfolio/${symbol}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) throw new Error('Failed to delete position');
+
+    await loadPortfolio();
+    log(`Удалена позиция: ${symbol}`, 'success');
+  } catch (error) {
+    console.error('Ошибка удаления позиции:', error);
+    alert('Ошибка при удалении позиции');
+  }
+};
+
+// Обновление портфеля
+window.refreshPortfolio = async function() {
+  await loadPortfolio();
+  log('Портфель обновлен', 'success');
+};
+
+// Инициализация при загрузке страницы портфеля
+const originalNavigateTo = window.navigateTo;
+window.navigateTo = function(pageName) {
+  originalNavigateTo(pageName);
+
+  if (pageName === 'portfolio') {
+    // Загружаем Chart.js динамически, если еще не загружен
+    if (!window.Chart) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+      script.onload = () => loadPortfolio();
+      document.head.appendChild(script);
+    } else {
+      loadPortfolio();
+    }
+  }
+};

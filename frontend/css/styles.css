@@ -65,7 +65,7 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
 /* ==========================================================================
    5. 💼 СТРАНИЦА ПОРТФЕЛЯ
    ========================================================================== */
-#portfolio-page { flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+#portfolio-page { flex-direction: column; align-items: center; padding: 20px; }
 .coming-soon { text-align: center; }
 .coming-soon h2 { font-size: 32px; margin-bottom: 15px; }
 .coming-soon p { color: #787b86; font-size: 16px; }
@@ -429,4 +429,215 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
 @keyframes skeleton-loading {
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
+}
+
+/* ==========================================================================
+   17. 💼 СТРАНИЦА ПОРТФЕЛЯ
+   ========================================================================== */
+.portfolio-container {
+    padding: 10px 40px 40px 40px; /* Минимальный отступ сверху */
+     width: 100%;
+     box-sizing: border-box;
+}
+
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.portfolio-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #d1d4dc;
+}
+
+.portfolio-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary, .btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: #2962ff;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1e53e5;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #2a2e39;
+  color: #d1d4dc;
+  border: 1px solid #363a45;
+}
+
+.btn-secondary:hover {
+  background: #363a45;
+}
+
+.portfolio-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.summary-card {
+  background: #1e222d;
+  border: 1px solid #2a2e39;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.summary-card h4 {
+  font-size: 12px;
+  color: #787b86;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.summary-card .value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #d1d4dc;
+}
+
+.summary-card .sub-value {
+  font-size: 14px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.text-green { color: #26a69a; }
+.text-red { color: #ef5350; }
+
+.portfolio-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-container {
+  background: #1e222d;
+  border: 1px solid #2a2e39;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #d1d4dc;
+  margin-bottom: 16px;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 300px;
+}
+
+.portfolio-table-container {
+  background: #1e222d;
+  border: 1px solid #2a2e39;
+  border-radius: 8px;
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.table-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #d1d4dc;
+  margin-bottom: 16px;
+}
+
+.portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.portfolio-table th,
+.portfolio-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #2a2e39;
+  font-size: 13px;
+}
+
+.portfolio-table th {
+  background: #252a36;
+  color: #787b86;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.portfolio-table tr:hover {
+  background: #2a2e39;
+}
+
+.portfolio-table .empty-state {
+  text-align: center;
+  color: #787b86;
+  padding: 40px;
+}
+
+.portfolio-table .btn-icon {
+  background: transparent;
+  border: 1px solid #363a45;
+  color: #787b86;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+.portfolio-table .btn-icon:hover {
+  background: #363a45;
+  color: #d1d4dc;
+}
+
+.portfolio-table .btn-icon.delete:hover {
+  background: rgba(239, 83, 80, 0.1);
+  color: #ef5350;
+  border-color: #ef5350;
+}
+
+@media (max-width: 768px) {
+  .portfolio-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 }
