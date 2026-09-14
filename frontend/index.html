@@ -92,9 +92,102 @@
     </div>
 
     <div id="portfolio-page" class="page">
-        <div class="coming-soon">
-            <h2>💼 Портфель</h2>
-            <p>Здесь будет управление вашими активами, доходностью и аналитика</p>
+        <div class="portfolio-container">
+            <!-- Заголовок и кнопки управления -->
+            <div class="portfolio-header">
+                <h2 class="portfolio-title">💼 Мой Портфель</h2>
+                <div class="portfolio-actions">
+                    <button class="btn-primary" onclick="openAddPositionModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Добавить позицию
+                    </button>
+                    <button class="btn-secondary" onclick="refreshPortfolio()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Обновить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Сводная статистика -->
+            <div class="portfolio-summary">
+                <div class="summary-card">
+                    <h4>Общая стоимость</h4>
+                    <div class="value" id="total-value">—</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Вложено</h4>
+                    <div class="value" id="total-invested">—</div>
+                </div>
+                <div class="summary-card">
+                    <h4>P&L (Прибыль/Убыток)</h4>
+                    <div class="value" id="total-pnl">—</div>
+                    <div class="sub-value" id="total-pnl-pct">—</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Количество позиций</h4>
+                    <div class="value" id="total-positions">0</div>
+                </div>
+            </div>
+
+            <!-- Графики -->
+            <div class="portfolio-charts">
+                <div class="chart-container">
+                    <h3 class="chart-title">Распределение портфеля</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="portfolio-pie-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">P&L по позициям</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="portfolio-bar-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица позиций -->
+            <div class="portfolio-table-container">
+                <h3 class="table-title">Позиции</h3>
+                <table class="portfolio-table">
+                    <thead>
+                    <tr>
+                        <th>Тикер</th>
+                        <th>Количество</th>
+                        <th>Средняя цена</th>
+                        <th>Текущая цена</th>
+                        <th>Стоимость</th>
+                        <th>P&L</th>
+                        <th>P&L %</th>
+                        <th>Действия</th>
+                    </tr>
+                    </thead>
+                    <tbody id="portfolio-tbody">
+                    <tr>
+                        <td colspan="8" class="empty-state">Загрузка...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Модальное окно добавления позиции -->
+        <div class="modal-overlay" id="add-position-modal">
+            <div class="modal-box">
+                <div class="modal-title">Добавить позицию</div>
+                <input type="text" class="modal-input" id="position-symbol" placeholder="Тикер (например, MOEX:SBER)" />
+                <input type="number" class="modal-input" id="position-quantity" placeholder="Количество" step="0.01" />
+                <input type="number" class="modal-input" id="position-avg-price" placeholder="Средняя цена покупки" step="0.01" />
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-cancel" onclick="closeAddPositionModal()">Отмена</button>
+                    <button class="modal-btn modal-btn-save" onclick="savePosition()">Добавить</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -134,5 +227,6 @@
 <script src="js/api.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
+<script src="js/portfolio.js"></script>
 </body>
 </html>
