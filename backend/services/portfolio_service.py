@@ -85,22 +85,6 @@ async def get_portfolio_with_pnl() -> dict:
         "total_pnl_pct": round(total_pnl_pct, 2)
     }
 
-    db.close()
-
-    total_pnl = total_value - total_invested
-    total_pnl_pct = (total_pnl / total_invested * 100) if total_invested > 0 else 0
-
-    print(f"=== ИТОГО: P&L = {total_pnl} ({total_pnl_pct}%) ===\n")
-
-    return {
-        "positions": result,
-        "total_value": round(total_value, 2),
-        "total_invested": round(total_invested, 2),
-        "total_pnl": round(total_pnl, 2),
-        "total_pnl_pct": round(total_pnl_pct, 2)
-    }
-
-
 async def add_position(symbol: str, quantity: float, avg_price: float) -> dict:
     db = SessionLocal()
     existing = db.query(Position).filter_by(symbol=symbol).first()

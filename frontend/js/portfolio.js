@@ -215,14 +215,8 @@ window.savePosition = async function() {
   const quantity = parseFloat(document.getElementById('position-quantity').value);
   const avgPrice = parseFloat(document.getElementById('position-avg-price').value);
 
-  if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
-    alert('Пожалуйста, заполните все поля корректно. Пример тикера: MOEX:SBER');
-    return;
-  }
-  // ... остальной код функции без изменений ...
-
-  if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
-    alert('Пожалуйста, заполните все поля корректно');
+  if (!symbol || isNaN(quantity) || isNaN(avgPrice) || quantity <= 0 || avgPrice <= 0) {
+    alert('Пожалуйста, заполните все поля корректно. Пример: MOEX:SBER, кол-во > 0, цена > 0');
     return;
   }
 
