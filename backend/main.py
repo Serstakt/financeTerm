@@ -64,7 +64,6 @@ async def add_position_endpoint(position: schemas.PositionCreate):
 async def remove_position_endpoint(symbol: str):
     return await portfolio_service.remove_position(symbol)
 
-
 if __name__ == "__main__":
     import uvicorn
 
