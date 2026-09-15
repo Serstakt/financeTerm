@@ -37,7 +37,7 @@ function renderPortfolio(data) {
       <tr>
         <td><strong>${pos.symbol}</strong></td>
         <td>${pos.quantity.toFixed(2)}</td>
-        <td>${pos.avg_price.toFixed(2)} ₽</td>
+        <td><strong>${pos.avg_price.toFixed(2)} ₽</strong></td> <!-- Это и есть Цена входа -->
         <td>${pos.current_price.toFixed(2)} ₽</td>
         <td>${(pos.quantity * pos.current_price).toFixed(2)} ₽</td>
         <td class="${pnlClass}">${pnlSign}${pos.pnl.toFixed(2)} ₽</td>
