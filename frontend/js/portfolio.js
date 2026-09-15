@@ -37,7 +37,7 @@ function renderPortfolio(data) {
       <tr>
         <td><strong>${pos.symbol}</strong></td>
         <td>${pos.quantity.toFixed(2)}</td>
-        <td>${pos.avg_price.toFixed(2)} ₽</td>
+        <td><strong>${pos.avg_price.toFixed(2)} ₽</strong></td> <!-- Это и есть Цена входа -->
         <td>${pos.current_price.toFixed(2)} ₽</td>
         <td>${(pos.quantity * pos.current_price).toFixed(2)} ₽</td>
         <td class="${pnlClass}">${pnlSign}${pos.pnl.toFixed(2)} ₽</td>
@@ -211,9 +211,15 @@ window.closeAddPositionModal = function() {
 };
 
 window.savePosition = async function() {
-  const symbol = document.getElementById('position-symbol').value.trim();
+  const symbol = document.getElementById('position-symbol').value.replace(/\s+/g, '').toUpperCase();
   const quantity = parseFloat(document.getElementById('position-quantity').value);
   const avgPrice = parseFloat(document.getElementById('position-avg-price').value);
+
+  if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
+    alert('Пожалуйста, заполните все поля корректно. Пример тикера: MOEX:SBER');
+    return;
+  }
+  // ... остальной код функции без изменений ...
 
   if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
     alert('Пожалуйста, заполните все поля корректно');
@@ -242,18 +248,28 @@ window.savePosition = async function() {
 window.deletePosition = async function(symbol) {
   if (!confirm(`Удалить позицию ${symbol}?`)) return;
 
+  // Очищаем символ от пробелов и приводим к верхнему регистру
+  const cleanSymbol = symbol.replace(/\s+/g, '').toUpperCase();
+  console.log(`🗑️ Удаление позиции: '${cleanSymbol}' (исходный: '${symbol}')`);
+
   try {
-    const response = await fetch(`http://localhost:8000/api/portfolio/${symbol}`, {
+    // Используем encodeURIComponent для безопасного URL
+    const response = await fetch(`http://localhost:8000/api/portfolio/${encodeURIComponent(cleanSymbol)}`, {
       method: 'DELETE'
     });
 
-    if (!response.ok) throw new Error('Failed to delete position');
+    const data = await response.json();
+    console.log('📡 Ответ от сервера:', data);
+
+    if (!response.ok || data.status === 'error') {
+      throw new Error(data.message || 'Failed to delete position');
+    }
 
     await loadPortfolio();
-    log(`Удалена позиция: ${symbol}`, 'success');
+    log(`Удалена позиция: ${cleanSymbol}`, 'success');
   } catch (error) {
-    console.error('Ошибка удаления позиции:', error);
-    alert('Ошибка при удалении позиции');
+    console.error('❌ Ошибка удаления позиции:', error);
+    alert(`Ошибка при удалении позиции: ${error.message}`);
   }
 };
 
