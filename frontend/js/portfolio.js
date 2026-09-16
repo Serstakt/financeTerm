@@ -2,6 +2,30 @@
 
 let portfolioPieChart = null;
 let portfolioBarChart = null;
+let currentChartMode = 'ticker'; // 'ticker' или 'sector'
+
+window.setChartMode = function(mode) {
+  currentChartMode = mode;
+
+  const btnTicker = document.getElementById('chart-mode-ticker');
+  const btnSector = document.getElementById('chart-mode-sector');
+
+  if (mode === 'sector') {
+    btnSector.style.background = '#2962ff';
+    btnSector.style.color = '#fff';
+    btnTicker.style.background = '#2a2e39';
+    btnTicker.style.color = '#d1d4dc';
+  } else {
+    btnTicker.style.background = '#2962ff';
+    btnTicker.style.color = '#fff';
+    btnSector.style.background = '#2a2e39';
+    btnSector.style.color = '#d1d4dc';
+  }
+
+  if (window.lastPortfolioData && window.lastPortfolioData.positions) {
+    renderPieChart(window.lastPortfolioData.positions);
+  }
+};
 
 // Загрузка данных портфеля
 window.loadPortfolio = async function() {
@@ -10,6 +34,7 @@ window.loadPortfolio = async function() {
     if (!response.ok) throw new Error('Failed to load portfolio');
 
     const data = await response.json();
+    window.lastPortfolioData = data;
     renderPortfolio(data);
     updatePortfolioSummary(data);
     renderPortfolioCharts(data);
@@ -87,12 +112,34 @@ function renderPieChart(positions) {
     portfolioPieChart.destroy();
   }
 
-  const labels = positions.map(p => p.symbol);
-  const values = positions.map(p => p.quantity * p.current_price);
+  let labels = [];
+  let values = [];
+
+  if (currentChartMode === 'sector') {
+    const sectorMap = {};
+    positions.forEach(pos => {
+      // Явно проверяем, что сектор существует и не является пустой строкой
+      const sec = (pos.sector && pos.sector.trim() !== "") ? pos.sector.trim() : "Не указан";
+      const val = (pos.quantity || 0) * (pos.current_price || 0);
+
+      console.log(`   ➕ Обработка: Тикер ${pos.symbol}, Сектор: "${sec}", Стоимость: ${val}`);
+
+      sectorMap[sec] = (sectorMap[sec] || 0) + val;
+    });
+
+    labels = Object.keys(sectorMap);
+    values = Object.values(sectorMap);
+
+    console.log("🗂️ Итоговая группировка по секторам:", sectorMap);
+  } else {
+    // Режим по тикерам
+    labels = positions.map(p => p.symbol);
+    values = positions.map(p => (p.quantity || 0) * (p.current_price || 0));
+  }
 
   const colors = [
     '#2962ff', '#26a69a', '#ffca28', '#ef5350', '#ab47bc',
-    '#ff7043', '#5c6bc0', '#29b6f6', '#66bb6a', '#ffa726'
+    '#ff7043', '#5c6bc0', '#29b6f6', '#66bb6a', '#ffa726', '#787b86'
   ];
 
   portfolioPieChart = new Chart(ctx, {
@@ -128,7 +175,7 @@ function renderPieChart(positions) {
             label: function(context) {
               const value = context.parsed;
               const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((value / total) * 100).toFixed(1);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
               return `${context.label}: ${value.toFixed(2)} ₽ (${percentage}%)`;
             }
           }
@@ -214,15 +261,10 @@ window.savePosition = async function() {
   const symbol = document.getElementById('position-symbol').value.replace(/\s+/g, '').toUpperCase();
   const quantity = parseFloat(document.getElementById('position-quantity').value);
   const avgPrice = parseFloat(document.getElementById('position-avg-price').value);
+  const sector = document.getElementById('position-sector').value;
 
-  if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
-    alert('Пожалуйста, заполните все поля корректно. Пример тикера: MOEX:SBER');
-    return;
-  }
-  // ... остальной код функции без изменений ...
-
-  if (!symbol || isNaN(quantity) || isNaN(avgPrice)) {
-    alert('Пожалуйста, заполните все поля корректно');
+  if (!symbol || isNaN(quantity) || isNaN(avgPrice) || quantity <= 0 || avgPrice <= 0) {
+    alert('Пожалуйста, заполните все поля корректно. Пример: MOEX:SBER, кол-во > 0, цена > 0');
     return;
   }
 
@@ -230,7 +272,7 @@ window.savePosition = async function() {
     const response = await fetch('http://localhost:8000/api/portfolio', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol, quantity, avg_price: avgPrice })
+      body: JSON.stringify({ symbol, quantity, avg_price: avgPrice, sector: sector })
     });
 
     if (!response.ok) throw new Error('Failed to add position');
