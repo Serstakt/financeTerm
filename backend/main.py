@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 import asyncio
 
-from .services import moex_service, yahoo_service, crypto_service
+from .services import moex_service, yahoo_service, crypto_service, telegram_news_service
 from .services import portfolio_service
 from .models import schemas
 
@@ -74,3 +74,10 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+
+@app.get("/api/news/telegram/{ticker}")
+async def get_telegram_news(ticker: str):
+    """Новости из @newssmartlab по тикеру"""
+    clean_ticker = ticker.replace("MOEX:", "").upper()
+    news = await telegram_news_service.fetch_smartlab_telegram_news(clean_ticker)
+    return {"symbol": f"MOEX:{clean_ticker}", "news": news}

@@ -113,3 +113,73 @@ window.detectExchange = function(symbol) {
   // По умолчанию NASDAQ
   return `NASDAQ:${sym}`;
 };
+// === ЛЕНТА НОВОСТЕЙ ИЗ TELEGRAM (@newssmartlab) ===
+
+window.loadTickerNews = async function(symbol) {
+    if (!symbol || symbol.startsWith('SECTION:')) {
+        const panel = document.getElementById('news-panel');
+        if (panel) panel.style.display = 'none';
+        return;
+    }
+
+    const newsPanel = document.getElementById('news-panel');
+    const newsList = document.getElementById('news-list');
+    const symbolSpan = document.getElementById('news-panel-symbol');
+
+    if (!newsPanel || !newsList || !symbolSpan) return;
+
+    newsPanel.style.display = 'block';
+    symbolSpan.textContent = symbol;
+
+    newsList.innerHTML = `
+        <div style="text-align: center; color: #787b86; padding: 40px;">
+            <div style="height: 20px; background: #2a2e39; border-radius: 4px; margin-bottom: 12px; animation: pulse 1.5s infinite;"></div>
+            <div style="height: 20px; background: #2a2e39; border-radius: 4px; margin-bottom: 12px; animation: pulse 1.5s infinite;"></div>
+        </div>
+    `;
+
+    try {
+        let news = [];
+        if (symbol.startsWith("MOEX:")) {
+            const ticker = symbol.replace("MOEX:", "").toUpperCase();
+            const response = await fetch(`/api/news/telegram/${ticker}`);
+            if (response.ok) {
+                const data = await response.json();
+                news = data.news || [];
+            }
+        }
+
+        if (!news || news.length === 0) {
+            newsList.innerHTML = `<div style="text-align: center; color: #787b86; padding: 40px;">Новостей не найдено</div>`;
+            return;
+        }
+
+        newsList.innerHTML = news.map(n => `
+            <a href="${n.link}" target="_blank" style="display: block; padding: 16px; margin-bottom: 12px; background: #2a2e39; border-radius: 8px; border: 1px solid #363a45; text-decoration: none; color: #d1d4dc;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${n.title}</div>
+                <div style="font-size: 12px; color: #787b86; display: flex; justify-content: space-between;">
+                    <span>${n.publisher}</span><span>${n.time || ''}</span>
+                </div>
+            </a>
+        `).join('');
+
+    } catch (error) {
+        console.error('Ошибка загрузки новостей:', error);
+        newsList.innerHTML = `<div style="text-align: center; color: #ef5350; padding: 20px;">Ошибка загрузки</div>`;
+    }
+};
+
+window.refreshNews = function() {
+    const currentList = getCurrentList();
+    if (currentList && currentList.activeSymbol) {
+        window.loadTickerNews(currentList.activeSymbol);
+    }
+};
+
+// Добавляем анимацию скелетона
+if (!document.getElementById('news-skeleton-style')) {
+    const style = document.createElement('style');
+    style.id = 'news-skeleton-style';
+    style.textContent = `@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }`;
+    document.head.appendChild(style);
+}

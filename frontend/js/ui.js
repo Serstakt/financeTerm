@@ -466,3 +466,45 @@ window.checkAlerts = function(symbol, currentPrice) {
     updateBellIconStatus(symbol, 'triggered');
   }
 };
+
+window.createChart = function(symbol) {
+    const chartDiv = document.getElementById('tradingview_chart');
+    if (!chartDiv) return;
+
+    if (typeof TradingView === 'undefined') {
+        chartDiv.innerHTML = '<div class="error-msg">⚠️ Ошибка загрузки скрипта TradingView.</div>';
+        return;
+    }
+
+    if (window.widget && window.widgetReady) {
+        window.widget.setSymbol(symbol, 'D', () => {});
+        // Загружаем новости при быстрой смене тикера
+        if (typeof window.loadTickerNews === 'function') {
+            window.loadTickerNews(symbol);
+        }
+        return;
+    }
+
+    chartDiv.innerHTML = '';
+    window.widget = new TradingView.widget({
+        "autosize": true,
+        "symbol": symbol,
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "ru",
+        "toolbar_bg": "#1e222d",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "tradingview_chart",
+        "onready": () => {
+            window.widgetReady = true;
+            if (typeof window.loadTickerNews === 'function') {
+                window.loadTickerNews(symbol);
+            }
+        }
+    });
+};
