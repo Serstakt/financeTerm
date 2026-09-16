@@ -70,10 +70,6 @@ async def add_position_endpoint(position: schemas.PositionCreate):
 async def remove_position_endpoint(symbol: str):
     return await portfolio_service.remove_position(symbol)
 
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
 
 @app.get("/api/news/telegram/{ticker}")
 async def get_telegram_news(ticker: str):
@@ -81,3 +77,8 @@ async def get_telegram_news(ticker: str):
     clean_ticker = ticker.replace("MOEX:", "").upper()
     news = await telegram_news_service.fetch_smartlab_telegram_news(clean_ticker)
     return {"symbol": f"MOEX:{clean_ticker}", "news": news}
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

@@ -279,9 +279,42 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
 /* ==========================================================================
    10. 📈 КОНТЕЙНЕР ГРАФИКА
    ========================================================================== */
-#chart-container { flex: 1; height: 100%; position: relative; }
-#tradingview_chart { height: 100%; width: 100%; }
+#chart-container { flex: 1; height: 70%; position: relative; }
+#tradingview_chart { height: 70%; width: 100%; }
 .error-msg { color: #ef5350; padding: 20px; font-size: 14px; line-height: 1.5; }
+
+/* === ПАНЕЛЬ НОВОСТЕЙ С ПРОКРУТКОЙ === */
+#news-panel {
+  display: flex;
+  flex-direction: column;
+  height: 50vh; /* 50% высоты экрана */
+  min-height: 400px;
+}
+
+#news-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Кастомный скроллбар */
+#news-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#news-list::-webkit-scrollbar-track {
+  background: #1e222d;
+  border-radius: 4px;
+}
+
+#news-list::-webkit-scrollbar-thumb {
+  background: #363a45;
+  border-radius: 4px;
+}
+
+#news-list::-webkit-scrollbar-thumb:hover {
+  background: #787b86;
+}
 
 /* ==========================================================================
    11. 🛠 ПАНЕЛЬ УПРАВЛЕНИЯ (IO) И МЕНЮ
