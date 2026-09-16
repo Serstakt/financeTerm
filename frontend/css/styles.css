@@ -45,9 +45,54 @@ body {
    ========================================================================== */
 #home-page { flex-direction: column; padding: 20px; overflow-y: auto; }
 .home-header { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #d1d4dc; }
+/* ==========================================================================
+   Контейнер для виджетов на главной странице (Flexbox)
+   ========================================================================== */
+.market-widgets-container {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+/* Виджет TradingView (занимает ~60% ширины) */
 .tv-market-overview {
-  width: 100%; min-height: 400px; height: auto; border-radius: 8px;
-  overflow: hidden; border: 1px solid #2a2e39; margin-bottom: 30px; background: #1e222d;
+  flex: 1.5;
+  min-height: 400px;
+  height: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #2a2e39;
+  background: #1e222d;
+}
+
+/* Виджет Investing.com (занимает ~40% ширины) */
+.investing-widget-container {
+  flex: 1;
+  min-height: 400px;
+  height: 400px; /* Фиксируем высоту для корректного отображения iframe */
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #2a2e39;
+  background: #1e222d;
+}
+
+/* Скрываем копирайт Investing, если он мешает (опционально) */
+.investing-widget-container .poweredBy {
+  display: none !important;
+}
+
+/* Адаптивность: на экранах меньше 1024px виджеты встанут друг под другом */
+@media (max-width: 1024px) {
+  .market-widgets-container {
+    flex-direction: column;
+  }
+  .tv-market-overview,
+  .investing-widget-container {
+    width: 100%;
+    flex: none;
+    height: 400px;
+  }
 }
 tv-market-data .tradingview-widget-copyright,
 tv-market-data a[href*="tradingview.com"] { display: none !important; }

@@ -70,12 +70,46 @@ window.getCompanyDomain = function(ticker) {
 };
 
 window.detectExchange = function(symbol) {
-  if (symbol.includes(':')) return symbol;
-  const moexTickers = new Set(['SBER', 'SBERP', 'GAZP', 'SIBN', 'LKOH', 'VTBR', 'YNDX', 'YDEX', 'TATN', 'TATNP', 'ROSN', 'RNFT', 'GMKN', 'NVTK', 'MGNT', 'RTKM', 'RTKMP', 'MOEX', 'IMOEX', 'INDEX_RTS', 'SVCB', 'CHMF', 'CHMK', 'ALRS', 'NLMK', 'PLZL', 'POLY', 'RUAL', 'SNGS', 'SNGSP', 'PHOR', 'IRAO', 'MTSS', 'LENT', 'AFLT', 'AFKS', 'AKRN', 'ENPG', 'FEES', 'FLOT', 'HYDR', 'IRGZ', 'OZON', 'TRMK', 'UPRO', 'VKCO', 'RAGR', 'AGRO', 'LSNGP', 'NGTK', 'T', 'CBOM', 'ASSB', 'AVAN', 'SFIN', 'TRNFP', 'TGMK', 'URKZ', 'RBCM', 'SMLT', 'TGKA', 'TGKB', 'TGKD', 'TGSN', 'VGSB', 'VGSO', 'VJGZ', 'MSRS', 'KOGK', 'RKKE', 'THRO', 'TKIM', 'HEAD', 'MGTSP', 'CNTL', 'ASTS', 'FIVE', 'DETL', 'MVID', 'SELG', 'OKEY', 'FESH', 'NMTP', 'SGBE', 'MRKY', 'MRKS', 'MRK', 'MRKP', 'MRKU', 'BELU', 'BLNG', 'DZRD', 'KMAZ', 'SPBE', 'USBN', 'UTAR', 'UTII', 'UVEK', 'MDMG', 'YRSB', 'APTK', 'PRMD']);
-  const nyseTickers = new Set(['T', 'BRK.B', 'WMT', 'JNJ', 'PG', 'MA', 'HD', 'UNH', 'V', 'JPM', 'XOM', 'PFE', 'BAC', 'KO', 'PEP', 'MRK', 'ABBV', 'CVX', 'LLY']);
+  const sym = symbol.toUpperCase().trim();
 
-  if (symbol.endsWith('USDT') || symbol.endsWith('BTC') || symbol.endsWith('ETH') || symbol === 'BTCUSDT' || symbol === 'ETHUSDT' || symbol === 'BNBUSDT') return `BINANCE:${symbol}`;
-  if (moexTickers.has(symbol)) return `MOEX:${symbol}`;
-  if (nyseTickers.has(symbol)) return `NYSE:${symbol}`;
-  return `NASDAQ:${symbol}`;
+  // 1. Явное исправление валютных пар MOEX (даже если введен префикс)
+  if (sym === 'MOEX:BYNRUB' || sym === 'BYNRUB') return 'MOEX:BYNRUB_TOM';
+  if (sym === 'MOEX:USD' || sym === 'USD') return 'MOEX:USD000UTSTOM';
+  if (sym === 'MOEX:EUR' || sym === 'EUR') return 'MOEX:EUR_RUB__TOM';
+  if (sym === 'MOEX:CNY' || sym === 'CNY') return 'MOEX:CNYRUB';
+
+  // 2. Если уже есть корректный префикс (и это не исправленная выше валюта), оставляем как есть
+  if (symbol.includes(':')) return symbol;
+
+  // 3. Криптовалюты
+  if (sym.endsWith('USDT') || sym.endsWith('BTC') || sym.endsWith('ETH') || sym === 'BNBUSDT') {
+    return `BINANCE:${sym}`;
+  }
+
+  // 4. Индексы Мосбиржи
+  const moexIndices = ['IMOEX', 'IRUS', 'RTSI', 'RGBI', 'RUBIUSDT', 'MOEX'];
+
+  // 5. Остальные валюты и акции Мосбиржи
+  const moexCurrencies = ['BYNRUB_TOM', 'USD000UTSTOM', 'EUR_RUB__TOM', 'CNYRUB', 'RUB'];
+  const moexTickers = new Set(['SBER', 'GAZP', 'LKOH', 'VTBR', 'YNDX', 'YDEX', 'TATN', 'MGNT', 'RTKM', 'OZON', 'FIVE', 'LENT', 'AFLT', 'AFKS', 'AKRN', 'ENPG', 'FEES', 'FLOT', 'HYDR', 'IRGZ', 'TRMK', 'UPRO', 'VKCO', 'RAGR', 'AGRO', 'LSNGP', 'NGTK', 'T', 'CBOM', 'ASSB', 'AVAN', 'SFIN', 'TRNFP', 'TGMK', 'URKZ', 'RBCM', 'SMLT', 'TGKA', 'TGKB', 'TGKD', 'TGSN', 'VGSB', 'VGSO', 'VJGZ', 'MSRS', 'KOGK', 'RKKE', 'THRO', 'TKIM', 'HEAD', 'MGTSP', 'CNTL', 'ASTS', 'DETL', 'MVID', 'SELG', 'OKEY', 'FESH', 'NMTP', 'SGBE', 'MRKY', 'MRKS', 'MRK', 'MRKP', 'MRKU', 'BELU', 'BLNG', 'DZRD', 'KMAZ', 'SPBE', 'USBN', 'UTAR', 'UTII', 'UVEK', 'MDMG', 'YRSB', 'APTK', 'PRMD', 'SBERP', 'SIBN', 'TATNP', 'ROSN', 'RNFT', 'GMKN', 'NVTK', 'CHMF', 'CHMK', 'ALRS', 'NLMK', 'PLZL', 'POLY', 'RUAL', 'SNGS', 'SNGSP', 'PHOR', 'IRAO', 'MTSS']);
+
+  if (moexIndices.includes(sym) || moexCurrencies.includes(sym) || moexTickers.has(sym)) {
+    return `MOEX:${sym}`;
+  }
+
+  // 6. Сырьевые товары и мировые индексы
+  if (sym === 'GOLD' || sym === 'XAUUSD') return `OANDA:XAUUSD`;
+  if (sym === 'SILVER' || sym === 'XAGUSD') return `OANDA:XAGUSD`;
+  if (sym === 'BRENT') return `CAPITALCOM:BRENT`;
+  if (sym === 'SPX' || sym === 'SP500') return `FOREXCOM:SPXUSD`;
+  if (sym === 'DJI' || sym === 'DOW') return `FOREXCOM:DJI`;
+  if (sym === 'NDX' || sym === 'NAS100') return `FOREXCOM:NSXUSD`;
+  if (sym === 'VIX') return `FOREXCOM:VIX`;
+
+  // 7. Американские акции
+  const nyseTickers = new Set(['T', 'BRK.B', 'WMT', 'JNJ', 'PG', 'MA', 'HD', 'UNH', 'V', 'JPM', 'XOM', 'PFE', 'BAC', 'KO', 'PEP', 'MRK', 'ABBV', 'CVX', 'LLY']);
+  if (nyseTickers.has(sym)) return `NYSE:${sym}`;
+
+  // По умолчанию NASDAQ
+  return `NASDAQ:${sym}`;
 };
