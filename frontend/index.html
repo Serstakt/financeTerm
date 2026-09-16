@@ -136,9 +136,16 @@
             </div>
 
             <!-- Графики -->
+
             <div class="portfolio-charts">
                 <div class="chart-container">
-                    <h3 class="chart-title">Распределение портфеля</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 class="chart-title" style="margin-bottom: 0;">Распределение портфеля</h3>
+                        <div style="background: #2a2e39; border-radius: 6px; padding: 4px; display: flex; gap: 4px;">
+                            <button id="chart-mode-ticker" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="setChartMode('ticker')">По тикерам</button>
+                            <button id="chart-mode-sector" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="setChartMode('sector')">По секторам</button>
+                        </div>
+                    </div>
                     <div class="chart-wrapper">
                         <canvas id="portfolio-pie-chart"></canvas>
                     </div>
@@ -183,6 +190,19 @@
                 <input type="text" class="modal-input" id="position-symbol" placeholder="Тикер (например, MOEX:SBER)" />
                 <input type="number" class="modal-input" id="position-quantity" placeholder="Количество" step="0.01" />
                 <input type="number" class="modal-input" id="position-avg-price" placeholder="Цена входа (например, 250.5)" step="0.01" />
+                <select class="modal-input" id="position-sector" style="cursor: pointer;">
+                    <option value="Не указан">Не указан</option>
+                    <option value="Недвижимость">Недвижимость</option>
+                    <option value="Информационные технологии">Информационные технологии</option>
+                    <option value="Сырьевая промышленность">Сырьевая промышленность</option>
+                    <option value="Машиностроение и транспорт">Машиностроение и транспорт</option>
+                    <option value="Здравоохранение">Здравоохранение</option>
+                    <option value="Потребительские товары и услуги">Портебительские товары и услуги</option>
+                    <option value="Телекоммуникации">Телекоммуникации</option>
+                    <option value="Финансовый сектор">Финансовый сектор</option>
+                    <option value="Энергетика">Энергетика</option>
+                    <option value="Другое">Другое</option>
+                </select>
                 <div class="modal-buttons">
                     <button class="modal-btn modal-btn-cancel" onclick="closeAddPositionModal()">Отмена</button>
                     <button class="modal-btn modal-btn-save" onclick="savePosition()">Добавить</button>

@@ -15,3 +15,4 @@ class PositionCreate(BaseModel):
     symbol: str
     quantity: float
     avg_price: float
+    sector: str = "Не указан"

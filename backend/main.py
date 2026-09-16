@@ -57,7 +57,13 @@ async def get_portfolio():
 
 @app.post("/api/portfolio")
 async def add_position_endpoint(position: schemas.PositionCreate):
-    return await portfolio_service.add_position(position.symbol, position.quantity, position.avg_price)
+    sector = getattr(position, 'sector', 'Не указан')
+    return await portfolio_service.add_position(
+        position.symbol,
+        position.quantity,
+        position.avg_price,
+        sector
+    )
 
 
 @app.delete("/api/portfolio/{symbol}")

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Float
-from backend.database.database import Base, SessionLocal
+from backend.database.database import Base, SessionLocal, engine
 from backend.services import moex_service, yahoo_service, crypto_service
 
 
@@ -8,6 +8,9 @@ class Position(Base):
     symbol = Column(String, primary_key=True)
     quantity = Column(Float, nullable=False)
     avg_price = Column(Float, nullable=False)
+    sector = Column(String, nullable=True, default="Не указан")
+
+Base.metadata.create_all(bind=engine)
 
 
 async def get_portfolio_with_pnl() -> dict:
@@ -24,14 +27,14 @@ async def get_portfolio_with_pnl() -> dict:
         clean_symbol = pos.symbol.replace(" ", "").upper()
         print(f"➡️ Обработка: {clean_symbol} | Кол-во: {pos.quantity} | Ср. цена: {pos.avg_price}")
 
-        current_price = pos.avg_price # Заглушка по умолчанию
+        current_price = pos.avg_price  # Заглушка по умолчанию
 
         try:
             if clean_symbol.startswith("MOEX:"):
                 ticker = clean_symbol.replace("MOEX:", "")
                 price_data = await moex_service.fetch_moex_price(ticker)
             elif clean_symbol.startswith(("NASDAQ:", "NYSE:")):
-                ticker = clean_symbol.split(":", 1)[1] # Берем часть после двоеточия
+                ticker = clean_symbol.split(":", 1)[1]  # Берем часть после двоеточия
                 price_data = await yahoo_service.fetch_yahoo_price(ticker)
             elif clean_symbol.startswith("BINANCE:"):
                 ticker = clean_symbol.replace("BINANCE:", "")
@@ -62,12 +65,13 @@ async def get_portfolio_with_pnl() -> dict:
         total_invested += invested
 
         result.append({
-            "symbol": clean_symbol, # Возвращаем очищенный символ
+            "symbol": clean_symbol,
             "quantity": pos.quantity,
             "avg_price": pos.avg_price,
             "current_price": current_price,
             "pnl": round(pnl, 2),
-            "pnl_pct": round(pnl_pct, 2)
+            "pnl_pct": round(pnl_pct, 2),
+            "sector": pos.sector
         })
 
     db.close()
@@ -85,20 +89,28 @@ async def get_portfolio_with_pnl() -> dict:
         "total_pnl_pct": round(total_pnl_pct, 2)
     }
 
-async def add_position(symbol: str, quantity: float, avg_price: float) -> dict:
+
+async def add_position(symbol: str, quantity: float, avg_price: float, sector: str = "Не указан") -> dict:
+    clean_symbol = symbol.replace(" ", "").upper()
     db = SessionLocal()
-    existing = db.query(Position).filter_by(symbol=symbol).first()
+    try:
+        existing = db.query(Position).filter_by(symbol=clean_symbol).first()
 
-    if existing:
-        total_qty = existing.quantity + quantity
-        existing.avg_price = ((existing.quantity * existing.avg_price + quantity * avg_price) / total_qty)
-        existing.quantity = total_qty
-    else:
-        db.add(Position(symbol=symbol, quantity=quantity, avg_price=avg_price))
+        if existing:
+            total_qty = existing.quantity + quantity
+            existing.avg_price = ((existing.quantity * existing.avg_price + quantity * avg_price) / total_qty)
+            existing.quantity = total_qty
+            existing.sector = sector
+        else:
+            db.add(Position(symbol=clean_symbol, quantity=quantity, avg_price=avg_price, sector=sector))
 
-    db.commit()
-    db.close()
-    return {"status": "ok", "symbol": symbol}
+        db.commit()
+        return {"status": "ok", "symbol": clean_symbol}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 
 
 async def remove_position(symbol: str) -> dict:
