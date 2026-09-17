@@ -135,7 +135,7 @@ window.loadTickerNews = async function(symbol) {
   }
 
   console.log("✅ [DEBUG] Показываем панель и скелетон...");
-  newsPanel.style.display = 'block';
+  newsPanel.style.display='flex';
   symbolSpan.textContent = symbol;
 
   newsList.innerHTML = `
@@ -176,25 +176,27 @@ window.loadTickerNews = async function(symbol) {
       return;
     }
 
-    // Отображаем новости с возможностью скролла
-    newsList.innerHTML = `
-      <div style="margin-bottom: 12px; padding: 8px 12px; background: #2a2e39; border-radius: 6px; font-size: 12px; color: #787b86;">
+// Отображаем новости. Padding вынесен во внутренний div, чтобы скролл не обрезал низ
+newsList.innerHTML = `
+<div style="padding: 0 20px; margin-top: 12px; flex-shrink: 0;">
+    <div style="padding: 8px 12px; background: #2a2e39; border-radius: 6px; font-size: 12px; color: #787b86; display: inline-block;">
         📊 Найдено <strong style="color: #2962ff;">${news.length}</strong> новостей
-      </div>
-      <div style="max-height: 450px; overflow-y: auto;">
-        ${news.map(n => `
-          <a href="${n.link}" target="_blank" style="display: flex; gap: 16px; padding: 16px; margin-bottom: 12px; background: #2a2e39; border-radius: 8px; border: 1px solid #363a45; text-decoration: none; color: #d1d4dc; transition: all 0.2s; align-items: flex-start;" onmouseover="this.style.background='#363a45'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#2a2e39'; this.style.transform='translateY(0)'">
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.4;">${n.title}</div>
-              <div style="font-size: 12px; color: #787b86;">${n.publisher}</div>
-            </div>
-            <div style="font-size: 12px; color: #2962ff; white-space: nowrap; flex-shrink: 0; padding-top: 2px; font-weight: 500;">
-              ${n.time || ''}
-            </div>
-          </a>
-        `).join('')}
-      </div>
-    `;
+    </div>
+</div>
+<div style="padding: 12px 20px 20px 20px; display: flex; flex-direction: column; gap: 12px;">
+    ${news.map(n => `
+    <a href="${n.link}" target="_blank" style="display: flex; gap: 16px; padding: 16px; background: #2a2e39; border-radius: 8px; border: 1px solid #363a45; text-decoration: none; color: #d1d4dc; transition: all 0.2s; align-items: flex-start;" onmouseover="this.style.background='#363a45'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#2a2e39'; this.style.transform='translateY(0)'">
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.4;">${n.title}</div>
+            <div style="font-size: 12px; color: #787b86;">${n.publisher}</div>
+        </div>
+        <div style="font-size: 12px; color: #2962ff; white-space: nowrap; flex-shrink: 0; padding-top: 2px; font-weight: 500;">
+            ${n.time || ''}
+        </div>
+    </a>
+    `).join('')}
+</div>
+`;
 
   } catch (error) {
     console.error('Ошибка загрузки новостей:', error);

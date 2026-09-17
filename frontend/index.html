@@ -107,42 +107,19 @@
         <div id="chart-container">
             <!-- Сам график TradingView -->
             <div id="tradingview_chart"></div>
-
             <!-- Панель новостей под графиком -->
-            <div id="news-panel" style="
-      margin-top: 20px;
-      background: #1e222d;
-      border-radius: 8px;
-      border: 1px solid #2a2e39;
-      overflow: hidden;
-      display: none; /* Скрыта по умолчанию, пока не выбран тикер */
-  ">
-                <div style="
-          padding: 16px 20px;
-          border-bottom: 1px solid #2a2e39;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-      ">
+            <div id="news-panel">
+                <div style="padding: 16px 20px; border-bottom: 1px solid #2a2e39; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                     <h3 style="margin: 0; font-size: 16px; color: #d1d4dc;">
                         📰 Новости: <span id="news-panel-symbol" style="color: #2962ff;">-</span>
                     </h3>
-                    <button onclick="refreshNews()" style="
-              background: #2a2e39;
-              border: 1px solid #363a45;
-              color: #d1d4dc;
-              padding: 6px 12px;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              transition: background 0.2s;
-          " onmouseover="this.style.background='#363a45'" onmouseout="this.style.background='#2a2e39'">
+                    <button onclick="refreshNews()" style="background: #2a2e39; border: 1px solid #363a45; color: #d1d4dc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: background 0.2s;" onmouseover="this.style.background='#363a45'" onmouseout="this.style.background='#2a2e39'">
                         🔄 Обновить
                     </button>
                 </div>
 
-                <div id="news-list" style="padding: 20px; max-height: 350px; overflow-y: auto;">
-                    <div style="text-align: center; color: #787b86; padding: 40px;">
+                <div id="news-list">
+                    <div style="padding: 20px; text-align: center; color: #787b86;">
                         Выберите тикер для загрузки новостей
                     </div>
                 </div>
