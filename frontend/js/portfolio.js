@@ -58,11 +58,27 @@ function renderPortfolio(data) {
     const pnlClass = pos.pnl >= 0 ? 'text-green' : 'text-red';
     const pnlSign = pos.pnl >= 0 ? '+' : '';
 
+    // === ЛОГИКА ДЛЯ ЛОГОТИПА (как в watchlist) ===
+    const parts = pos.symbol.split(':');
+    const baseTicker = parts.length > 1 ? parts[1] : pos.symbol; // Убираем "MOEX:"
+    const domain = getCompanyDomain(baseTicker);
+    const fallbackLetter = baseTicker.charAt(0);
+
+    const logoInnerHtml = domain
+      ? `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=128" class="ticker-logo" onerror="this.style.display='none'; this.parentElement.querySelector('.ticker-logo-fallback').style.display='flex';" /><div class="ticker-logo-fallback" style="display: none;">${fallbackLetter}</div>`
+      : `<div class="ticker-logo-fallback" style="display: flex;">${fallbackLetter}</div>`;
+    // ==============================================
+
     return `
       <tr>
-        <td><strong>${pos.symbol}</strong></td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="ticker-logo-container">${logoInnerHtml}</div>
+            <strong>${baseTicker}</strong>
+          </div>
+        </td>
         <td>${pos.quantity.toFixed(2)}</td>
-        <td><strong>${pos.avg_price.toFixed(2)} ₽</strong></td> <!-- Это и есть Цена входа -->
+        <td><strong>${pos.avg_price.toFixed(2)} ₽</strong></td>
         <td>${pos.current_price.toFixed(2)} ₽</td>
         <td>${(pos.quantity * pos.current_price).toFixed(2)} ₽</td>
         <td class="${pnlClass}">${pnlSign}${pos.pnl.toFixed(2)} ₽</td>
@@ -131,11 +147,10 @@ function renderPieChart(positions) {
     values = Object.values(sectorMap);
 
     console.log("🗂️ Итоговая группировка по секторам:", sectorMap);
-  } else {
-    // Режим по тикерам
-    labels = positions.map(p => p.symbol);
-    values = positions.map(p => (p.quantity || 0) * (p.current_price || 0));
-  }
+    } else {
+        labels = positions.map(p => p.symbol.includes(':') ? p.symbol.split(':')[1] : p.symbol);
+        values = positions.map(p => (p.quantity || 0) * (p.current_price || 0));
+      }
 
   const colors = [
     '#2962ff', '#26a69a', '#ffca28', '#ef5350', '#ab47bc',
@@ -193,8 +208,11 @@ function renderBarChart(positions) {
     portfolioBarChart.destroy();
   }
 
-  const labels = positions.map(p => p.symbol);
+  // Убираем префикс биржи для подписей на оси X
+  const labels = positions.map(p => p.symbol.includes(':') ? p.symbol.split(':')[1] : p.symbol);
   const pnlValues = positions.map(p => p.pnl);
+
+  // === ЭТА СТРОКА ОБЯЗАТЕЛЬНА: определяем цвета до их использования ===
   const colors = pnlValues.map(pnl => pnl >= 0 ? '#26a69a' : '#ef5350');
 
   portfolioBarChart = new Chart(ctx, {
@@ -204,7 +222,7 @@ function renderBarChart(positions) {
       datasets: [{
         label: 'P&L (₽)',
         data: pnlValues,
-        backgroundColor: colors,
+        backgroundColor: colors, // Теперь переменная colors существует
         borderColor: colors,
         borderWidth: 1
       }]

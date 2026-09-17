@@ -43,6 +43,7 @@ RU_NAMES = {
     'ENPG': ['Энел', 'Энел Россия'],
     'FEES': ['Россети', 'Россетей'],
     'HYDR': ['РусГидро', 'Русгидро'],
+    'T': ['T-технологии'],
 }
 
 async def get_cached_news(ticker: str) -> list | None:
