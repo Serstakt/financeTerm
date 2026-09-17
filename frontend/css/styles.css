@@ -55,7 +55,6 @@ body {
   margin-bottom: 30px;
 }
 
-/* Виджет TradingView (занимает ~60% ширины) */
 .tv-market-overview {
   flex: 1.5;
   min-height: 400px;
@@ -66,11 +65,10 @@ body {
   background: #1e222d;
 }
 
-/* Виджет Investing.com (занимает ~40% ширины) */
 .investing-widget-container {
   flex: 1;
   min-height: 400px;
-  height: 400px; /* Фиксируем высоту для корректного отображения iframe */
+  height: 400px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #2a2e39;
@@ -524,7 +522,7 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
    17. 💼 СТРАНИЦА ПОРТФЕЛЯ
    ========================================================================== */
 .portfolio-container {
-    padding: 10px 40px 40px 40px; /* Минимальный отступ сверху */
+    padding: 10px 40px 40px 40px;
      width: 100%;
      box-sizing: border-box;
 }
