@@ -162,45 +162,44 @@ async def fetch_smartlab_telegram_news(ticker: str, max_posts: int = 1000, max_n
                 # Нашли совпадение!
                 print(f"✅ Совпадение #{len(news_list)+1} (термин: '{matched_term}')")
 
-                # === МАКСИМАЛЬНО НАДЁЖНОЕ ИЗВЛЕЧЕНИЕ ДАТЫ ===
-                pub_date_raw = ""
+                # === ДИАГНОСТИКА И ИЗВЛЕЧЕНИЕ ДАТЫ ===
                 pub_date = "Дата не указана"
 
-                # Приоритет 1: Атрибут datetime у тега <time> (самый надежный, содержит полную дату)
-                time_tag = msg.find('time', class_='tgme_widget_message_date')
-                if time_tag and time_tag.has_attr('datetime'):
-                    pub_date_raw = time_tag['datetime']
+                # 1. Находим ссылку, содержащую дату
+                date_link = msg.find('a', class_='tgme_widget_message_date')
 
-                # Приоритет 2: Атрибут title у ссылки (Telegram хранит там полную дату для всплывающей подсказки)
-                if not pub_date_raw:
-                    date_link = msg.find('a', class_='tgme_widget_message_date')
-                    if date_link and date_link.has_attr('title'):
-                        pub_date_raw = date_link['title']
+                if date_link:
+                    # ДИАГНОСТИКА: Печатаем сырой HTML
+                    print(f"   🔍 RAW HTML ДАТЫ: {str(date_link)[:150]}...")
 
-                # Приоритет 3: Видимый текст (если атрибуты отсутствуют, например, "вчера, 14:30")
-                if not pub_date_raw:
-                    if date_link:
-                        pub_date_raw = date_link.get_text(strip=True)
-                    elif time_tag:
-                        pub_date_raw = time_tag.get_text(strip=True)
+                    # 2. Ищем тег <time> внутри ссылки
+                    time_tag = date_link.find('time')
 
-                # Форматируем дату, если это ISO-строка (например, 2024-09-16T07:51:00+00:00)
-                if pub_date_raw and 'T' in pub_date_raw:
-                    try:
-                        # Заменяем Z на +00:00 для корректного парсинга в Python
-                        dt_str = pub_date_raw.replace('Z', '+00:00')
-                        dt = datetime.fromisoformat(dt_str)
-                        pub_date = dt.strftime('%d.%m.%Y %H:%M')
-                    except Exception as e:
-                        # Если парсинг не удался, оставляем как есть
-                        pub_date = pub_date_raw
+                    if time_tag and time_tag.has_attr('datetime'):
+                        dt_str = time_tag['datetime']
+                        print(f"   ✅ Найден атрибут datetime: {dt_str}")
+
+                        try:
+                            dt_str_clean = dt_str.replace('Z', '+00:00')
+                            dt = datetime.fromisoformat(dt_str_clean)
+                            pub_date = dt.strftime('%d.%m.%Y %H:%M')
+                            print(f"   🎯 Успешно распарсено в: {pub_date}")
+                        except Exception as e:
+                            print(f"   ⚠️ Ошибка парсинга ISO: {e}")
+                            pub_date = time_tag.get_text(strip=True)
+                    else:
+                        print(f"   ⚠️ Тег <time> или атрибут datetime не найден")
+                        pub_date = date_link.get_text(strip=True)
                 else:
-                    # Если это уже текст (например, "16 сен, 07:51"), оставляем его
-                    pub_date = pub_date_raw if pub_date_raw else "Дата не указана"
+                    print(f"   ⚠️ Ссылка с классом tgme_widget_message_date не найдена в посте")
 
-                # Для отладки в терминале (можно будет удалить потом)
-                # print(f"   📅 Сырая дата: '{pub_date_raw}' -> Форматированная: '{pub_date}'")
-                # ==========================================================
+                # 4. Умный фоллбэк: если в итоге осталось только время (например, "07:51"), добавляем сегодня
+                # (import re уже есть в самом начале файла, здесь он не нужен!)
+                if re.match(r'^\d{2}:\d{2}$', pub_date):
+                    today = datetime.now().strftime('%d.%m.%Y')
+                    pub_date = f"{today} {pub_date}"
+                    print(f"   ℹ️ Применен фоллбэк: добавлена сегодняшняя дата -> {pub_date}")
+                # ========================================
 
                 # Извлекаем ссылку
                 link_tag = msg.find('a', class_='tgme_widget_message_date')

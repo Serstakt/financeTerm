@@ -181,7 +181,7 @@ window.loadTickerNews = async function(symbol) {
       <div style="margin-bottom: 12px; padding: 8px 12px; background: #2a2e39; border-radius: 6px; font-size: 12px; color: #787b86;">
         📊 Найдено <strong style="color: #2962ff;">${news.length}</strong> новостей
       </div>
-      <div style="max-height: calc(100% - 40px); overflow-y: auto;">
+      <div style="max-height: 450px; overflow-y: auto;">
         ${news.map(n => `
           <a href="${n.link}" target="_blank" style="display: flex; gap: 16px; padding: 16px; margin-bottom: 12px; background: #2a2e39; border-radius: 8px; border: 1px solid #363a45; text-decoration: none; color: #d1d4dc; transition: all 0.2s; align-items: flex-start;" onmouseover="this.style.background='#363a45'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#2a2e39'; this.style.transform='translateY(0)'">
             <div style="flex: 1; min-width: 0;">

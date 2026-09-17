@@ -182,7 +182,6 @@ window.render = async function() {
       <div class="ticker-logo-container">${logoInnerHtml}</div>
       <div class="ticker-info">
         <a href="${smartLabUrl}" target="_blank" rel="noopener noreferrer" class="ticker-symbol-link" title="Открыть ${baseTicker} на Smart-Lab" onclick="event.stopPropagation();">${baseTicker}</a>
-        <span class="ticker-exchange">${parts.length > 1 ? parts[0] : ''}</span>
       </div>
       <div class="ticker-price" id="price-${safeId}">${data?.price ? formatNumber(data.price) : '<div class="skeleton skeleton-price"></div>'}</div>
       <div class="ticker-change" id="change-val-${safeId}">${data?.changeValue !== undefined && data?.changeValue !== null ? '' : '<div class="skeleton skeleton-change"></div>'}</div>
