@@ -278,9 +278,6 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
 /* ==========================================================================
    10. 📈 КОНТЕЙНЕР ГРАФИКА
    ========================================================================== */
-/* ==========================================================================
-   10. 📈 КОНТЕЙНЕР ГРАФИКА
-   ========================================================================== */
 #chart-container {
   flex: 1;
   position: relative;
@@ -290,18 +287,18 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
 }
 
 #tradingview_chart {
-  flex: 1; /* Занимает половину пространства */
+  flex: 1;
   width: 100%;
-  min-height: 0; /* Критически важно */
+  min-height: 0;
 }
 
 .error-msg { color: #ef5350; padding: 20px; font-size: 14px; line-height: 1.5; }
 
 /* === ПАНЕЛЬ НОВОСТЕЙ === */
 #news-panel {
-  flex: 1; /* Занимает половину пространства */
+  flex: 1;
   min-height: 0;
-  display: none; /* Управляется через JS */
+  display: none;
   flex-direction: column;
   margin-top: 20px;
   background: #1e222d;
@@ -316,7 +313,6 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
   min-height: 0;
 }
 
-/* Кастомный скроллбар */
 #news-list::-webkit-scrollbar {
   width: 8px;
 }
