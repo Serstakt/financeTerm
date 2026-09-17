@@ -116,8 +116,8 @@ window.detectExchange = function(symbol) {
 };
 
 // === ЛЕНТА НОВОСТЕЙ ИЗ TELEGRAM (@newssmartlab) ===
-window.loadTickerNews = async function(symbol) {
-  console.log("🚀 [DEBUG] loadTickerNews вызвана для:", symbol);
+window.loadTickerNews = async function(symbol, forceRefresh = false) {
+  console.log("🚀 [DEBUG] loadTickerNews вызвана для:", symbol, "Force:", forceRefresh);
 
   if (!symbol || symbol.startsWith('SECTION:')) {
     const panel = document.getElementById('news-panel');
@@ -135,24 +135,29 @@ window.loadTickerNews = async function(symbol) {
   }
 
   console.log("✅ [DEBUG] Показываем панель и скелетон...");
-  newsPanel.style.display='flex';
+  newsPanel.style.display = 'flex';
   symbolSpan.textContent = symbol;
 
-  newsList.innerHTML = `
-    <div style="text-align: center; color: #787b86; padding: 40px;">
-      <div style="font-size: 24px; margin-bottom: 12px;"></div>
-      <div>Загрузка новостей (парсинг 1000 постов)...</div>
-      <div style="font-size: 12px; margin-top: 8px;">Это может занять 10-20 секунд</div>
-    </div>
-  `;
+  // Показываем скелетон только если это принудительное обновление или первый запуск
+  if (forceRefresh || newsList.children.length === 0) {
+      newsList.innerHTML = `
+        <div style="text-align: center; color: #787b86; padding: 40px;">
+          <div style="font-size: 24px; margin-bottom: 12px;">⏳</div>
+          <div>${forceRefresh ? 'Принуд更新ление новостей...' : 'Загрузка новостей...'}</div>
+        </div>
+      `;
+  }
 
   try {
     let news = [];
     if (symbol.startsWith("MOEX:")) {
       const ticker = symbol.replace("MOEX:", "").toUpperCase();
-      console.log("📡 [DEBUG] Отправляем fetch на: /api/news/telegram/" + ticker);
 
-      const response = await fetch(`/api/news/telegram/${ticker}`);
+      // Добавляем параметр force_refresh в URL запроса
+      const url = `/api/news/telegram/${ticker}?force_refresh=${forceRefresh}`;
+      console.log("📡 [DEBUG] Отправляем fetch на:", url);
+
+      const response = await fetch(url);
       console.log("📥 [DEBUG] Ответ получен, статус:", response.status);
 
       if (response.ok) {
@@ -161,20 +166,6 @@ window.loadTickerNews = async function(symbol) {
       }
     }
 
-    if (!news || news.length === 0) {
-      newsList.innerHTML = `
-        <div style="text-align: center; color: #787b86; padding: 40px;">
-          <div style="font-size: 24px; margin-bottom: 12px;"></div>
-          <div>В последних 1000 постах @newssmartlab не найдено упоминаний <strong>${symbol}</strong>.</div>
-          <div style="margin-top: 12px; font-size: 13px;">
-            <a href="https://smart-lab.ru/q/${symbol.replace('MOEX:', '').toLowerCase()}/" target="_blank" style="color: #2962ff; text-decoration: none;">
-              Посмотреть все обсуждения на Smart-Lab
-            </a>
-          </div>
-        </div>
-      `;
-      return;
-    }
 
 // Отображаем новости. Padding вынесен во внутренний div, чтобы скролл не обрезал низ
 newsList.innerHTML = `
@@ -208,7 +199,8 @@ newsList.innerHTML = `
 window.refreshNews = function() {
   const currentList = getCurrentList();
   if (currentList && currentList.activeSymbol) {
-    window.loadTickerNews(currentList.activeSymbol);
+    // Передаем true, чтобы бэкенд проигнорировал кэш и спарсил заново
+    window.loadTickerNews(currentList.activeSymbol, true);
   }
 };
 

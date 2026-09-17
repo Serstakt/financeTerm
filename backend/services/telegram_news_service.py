@@ -5,7 +5,7 @@ import re
 import asyncio
 
 _news_cache = {}
-CACHE_DURATION = 300
+CACHE_DURATION = 600
 
 RU_NAMES = {
     'ROSN': ['Роснефть', 'Роснефти'],
@@ -41,13 +41,20 @@ RU_NAMES = {
     'HYDR': ['РусГидро', 'Русгидро'],
 }
 
-async def fetch_smartlab_telegram_news(ticker: str, max_posts: int = 1000, max_news: int = 50) -> list:
+async def fetch_smartlab_telegram_news(ticker: str, max_posts: int = 1000, max_news: int = 50, force_refresh: bool = False) -> list:
     channel_username = "newssmartlab"
-
-    # Очищаем кэш для свежих данных
     cache_key = f"{ticker}_{max_posts}_{max_news}"
-    if cache_key in _news_cache:
-        del _news_cache[cache_key]
+
+    # 1. Проверяем кэш, если не запрошено принудительное обновление
+    if not force_refresh and cache_key in _news_cache:
+        cached_time, cached_news = _news_cache[cache_key]
+        # Проверяем, не истекло ли 5 минут (300 секунд)
+        if (datetime.now() - cached_time).total_seconds() < CACHE_DURATION:
+            print(f"✅ Возвращаем новости из кэша для {ticker} (осталось {(CACHE_DURATION - (datetime.now() - cached_time).total_seconds()):.0f} сек)")
+            return cached_news
+        else:
+            print(f"⏳ Кэш устарел для {ticker}, запускаем парсинг...")
+            del _news_cache[cache_key] # Удаляем только если устарел
 
     search_terms = [
         f"${ticker.upper()}",
