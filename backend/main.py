@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 import asyncio
 
-from .services import moex_service, yahoo_service, crypto_service
+from .services import moex_service, yahoo_service, crypto_service, telegram_news_service
 from .services import portfolio_service
 from .models import schemas
 
@@ -69,6 +69,14 @@ async def add_position_endpoint(position: schemas.PositionCreate):
 @app.delete("/api/portfolio/{symbol}")
 async def remove_position_endpoint(symbol: str):
     return await portfolio_service.remove_position(symbol)
+
+
+@app.get("/api/news/telegram/{ticker}")
+async def get_telegram_news(ticker: str):
+    """Новости из @newssmartlab по тикеру"""
+    clean_ticker = ticker.replace("MOEX:", "").upper()
+    news = await telegram_news_service.fetch_smartlab_telegram_news(clean_ticker)
+    return {"symbol": f"MOEX:{clean_ticker}", "news": news}
 
 if __name__ == "__main__":
     import uvicorn

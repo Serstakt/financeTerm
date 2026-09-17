@@ -182,7 +182,6 @@ window.render = async function() {
       <div class="ticker-logo-container">${logoInnerHtml}</div>
       <div class="ticker-info">
         <a href="${smartLabUrl}" target="_blank" rel="noopener noreferrer" class="ticker-symbol-link" title="Открыть ${baseTicker} на Smart-Lab" onclick="event.stopPropagation();">${baseTicker}</a>
-        <span class="ticker-exchange">${parts.length > 1 ? parts[0] : ''}</span>
       </div>
       <div class="ticker-price" id="price-${safeId}">${data?.price ? formatNumber(data.price) : '<div class="skeleton skeleton-price"></div>'}</div>
       <div class="ticker-change" id="change-val-${safeId}">${data?.changeValue !== undefined && data?.changeValue !== null ? '' : '<div class="skeleton skeleton-change"></div>'}</div>
@@ -465,4 +464,47 @@ window.checkAlerts = function(symbol, currentPrice) {
     trimAlertsHistory();
     updateBellIconStatus(symbol, 'triggered');
   }
+};
+
+window.createChart = function(symbol) {
+    console.log("📊 [DEBUG] createChart вызвана для:", symbol);
+    const chartDiv = document.getElementById('tradingview_chart');
+    if (!chartDiv) return;
+
+    if (typeof TradingView === 'undefined') {
+        chartDiv.innerHTML = '<div class="error-msg">⚠️ Ошибка загрузки скрипта TradingView.</div>';
+        return;
+    }
+
+    if (window.widget && window.widgetReady) {
+        window.widget.setSymbol(symbol, 'D', () => {});
+    } else {
+        chartDiv.innerHTML = '';
+        window.widget = new TradingView.widget({
+            "autosize": true,
+            "symbol": symbol,
+            "interval": "D",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "ru",
+            "toolbar_bg": "#1e222d",
+            "enable_publishing": false,
+            "hide_top_toolbar": false,
+            "hide_legend": false,
+            "save_image": false,
+            "container_id": "tradingview_chart",
+            "onready": () => {
+                window.widgetReady = true;
+            }
+        });
+    }
+
+    // ЯВНЫЙ ВЫЗОВ НОВОСТЕЙ
+    if (typeof window.loadTickerNews === 'function') {
+        console.log("✅ [DEBUG] Вызываем loadTickerNews для:", symbol);
+        window.loadTickerNews(symbol);
+    } else {
+        console.error("❌ [DEBUG] Функция loadTickerNews НЕ НАЙДЕНА!");
+    }
 };
