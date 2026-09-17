@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -72,10 +72,15 @@ async def remove_position_endpoint(symbol: str):
 
 
 @app.get("/api/news/telegram/{ticker}")
-async def get_telegram_news(ticker: str):
+async def get_telegram_news(ticker: str, force_refresh: bool = Query(default=False)):
     """Новости из @newssmartlab по тикеру"""
     clean_ticker = ticker.replace("MOEX:", "").upper()
-    news = await telegram_news_service.fetch_smartlab_telegram_news(clean_ticker)
+
+    # Передаем флаг force_refresh в сервис
+    news = await telegram_news_service.fetch_smartlab_telegram_news(
+        clean_ticker,
+        force_refresh=force_refresh
+    )
     return {"symbol": f"MOEX:{clean_ticker}", "news": news}
 
 if __name__ == "__main__":
