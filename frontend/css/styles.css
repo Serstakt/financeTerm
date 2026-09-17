@@ -278,44 +278,59 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
 /* ==========================================================================
    10. 📈 КОНТЕЙНЕР ГРАФИКА
    ========================================================================== */
-#chart-container { flex: 1; height: 70%; position: relative; }
-#tradingview_chart { height: 70%; width: 100%; }
-.error-msg { color: #ef5350; padding: 20px; font-size: 14px; line-height: 1.5; }
-
-/* === ПАНЕЛЬ НОВОСТЕЙ С ПРОКРУТКОЙ === */
-#news-panel {
+/* ==========================================================================
+   10. 📈 КОНТЕЙНЕР ГРАФИКА
+   ========================================================================== */
+#chart-container {
+  flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 50vh; /* 50% высоты экрана */
-  min-height: 500px;
+  min-height: 0;
+}
+
+#tradingview_chart {
+  flex: 1; /* Занимает половину пространства */
+  width: 100%;
+  min-height: 0; /* Критически важно */
+}
+
+.error-msg { color: #ef5350; padding: 20px; font-size: 14px; line-height: 1.5; }
+
+/* === ПАНЕЛЬ НОВОСТЕЙ === */
+#news-panel {
+  flex: 1; /* Занимает половину пространства */
+  min-height: 0;
+  display: none; /* Управляется через JS */
+  flex-direction: column;
+  margin-top: 20px;
+  background: #1e222d;
+  border-radius: 8px;
+  border: 1px solid #2a2e39;
+  overflow: hidden;
 }
 
 #news-list {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  max-height: 550px;
+  min-height: 0;
 }
 
 /* Кастомный скроллбар */
 #news-list::-webkit-scrollbar {
   width: 8px;
 }
-
 #news-list::-webkit-scrollbar-track {
   background: #1e222d;
   border-radius: 4px;
 }
-
 #news-list::-webkit-scrollbar-thumb {
   background: #363a45;
   border-radius: 4px;
 }
-
 #news-list::-webkit-scrollbar-thumb:hover {
   background: #787b86;
 }
-
 /* ==========================================================================
    11. 🛠 ПАНЕЛЬ УПРАВЛЕНИЯ (IO) И МЕНЮ
    ========================================================================== */
