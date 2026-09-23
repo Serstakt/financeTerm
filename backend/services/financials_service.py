@@ -14,6 +14,7 @@ class FinancialReport(Base):
     period = Column(String, nullable=False)  # например 'Q1 2024' или '2024'
     end_date = Column(String, nullable=True)  # дата окончания периода
     metrics_json = Column(Text, nullable=False)  # JSON с метриками
+    raw_json = Column(Text, nullable=True)  # JSON: полная таблица всех строк отчета
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -22,9 +23,28 @@ class FinancialReport(Base):
 Base.metadata.create_all(bind=engine)
 
 
+def _migrate_add_raw_column():
+    """Добавляет колонку raw_json в существующую БД (SQLite), если её нет."""
+    try:
+        from sqlalchemy import inspect, text
+        insp = inspect(engine)
+        if 'financial_reports' in insp.get_table_names():
+            cols = {c['name'] for c in insp.get_columns('financial_reports')}
+            if 'raw_json' not in cols:
+                with engine.begin() as conn:
+                    conn.execute(text(
+                        "ALTER TABLE financial_reports ADD COLUMN raw_json TEXT"
+                    ))
+    except Exception as e:
+        print(f"[financials] миграция raw_json пропущена: {e}")
+
+
+_migrate_add_raw_column()
+
+
 async def save_financial_data(ticker: str, period_type: str, period: str, 
-                               end_date: str, metrics: dict) -> dict:
-    """Сохраняет финансовые данные в БД"""
+                               end_date: str, metrics: dict, raw_table: dict = None) -> dict:
+    """Сохраняет финансовые данные (включая полную таблицу строк отчета) в БД"""
     db = SessionLocal()
     try:
         # Проверяем, есть ли уже такая запись
@@ -38,6 +58,8 @@ async def save_financial_data(ticker: str, period_type: str, period: str,
             # Обновляем существующую запись
             existing.metrics_json = json.dumps(metrics)
             existing.end_date = end_date
+            if raw_table is not None:
+                existing.raw_json = json.dumps(raw_table, ensure_ascii=False)
             existing.updated_at = datetime.utcnow()
         else:
             # Создаем новую запись
@@ -46,7 +68,8 @@ async def save_financial_data(ticker: str, period_type: str, period: str,
                 period_type=period_type,
                 period=period,
                 end_date=end_date,
-                metrics_json=json.dumps(metrics)
+                metrics_json=json.dumps(metrics),
+                raw_json=json.dumps(raw_table, ensure_ascii=False) if raw_table is not None else None
             )
             db.add(report)
         
@@ -83,8 +106,8 @@ async def get_financial_data(ticker: str, period_type: str = None) -> dict:
         
         result = {
             "ticker": ticker,
-            "quarterly": {"periods": [], "data": {}},
-            "annual": {"periods": [], "data": {}}
+            "quarterly": {"periods": [], "data": {}, "rows": {}},
+            "annual": {"periods": [], "data": {}, "rows": {}}
         }
         
         for report in reports:
@@ -102,6 +125,21 @@ async def get_financial_data(ticker: str, period_type: str = None) -> dict:
                 if key not in result[report.period_type]["data"]:
                     result[report.period_type]["data"][key] = {}
                 result[report.period_type]["data"][key][report.period] = value
+
+            # Добавляем полную таблицу строк отчета (smart-lab style)
+            if report.raw_json:
+                try:
+                    raw = json.loads(report.raw_json)
+                    bucket = result[report.period_type].setdefault("rows", {})
+                    for row in raw.get("rows", []):
+                        name = row.get("name")
+                        if not name:
+                            continue
+                        target = bucket.setdefault(name, {})
+                        for col, val in (row.get("values") or {}).items():
+                            target[col] = val
+                except Exception:
+                    pass
         
         # Сортируем периоды
         for ptype in ["quarterly", "annual"]:
@@ -155,54 +193,51 @@ async def delete_financial_data(ticker: str, period_type: str, period: str) -> d
 async def process_report_with_llm(file_content: bytes, file_type: str, 
                                    ticker: str, period_type: str) -> dict:
     """
-    Обрабатывает файл с отчетностью с помощью LLM и извлекает метрики.
-    
-    В реальной реализации здесь будет вызов LLM API для парсинга файла.
-    Сейчас это заглушка, которая возвращает тестовые данные.
+    Обрабатывает файл с отчетностью: читает ВСЕ строки отчета (Excel/CSV/PDF/DOCX/HTML),
+    строит полную таблицу по аналогии со smart-lab.ru, при наличии LLM_API_KEY —
+    обогащает данные через LLM (нормализация названий, определение периода).
     """
-    # TODO: Интегрировать с LLM для парсинга файлов
-    # Примерный план:
-    # 1. Отправить файл в LLM (Claude, GPT-4 Vision, etc.)
-    # 2. Попросить извлечь финансовые метрики в формате JSON
-    # 3. Распарсить ответ и вернуть структурированные данные
-    
-    # Для демонстрации возвращаем тестовые данные
-    # В реальности здесь будет логика вызова LLM API
-    
-    import random
-    
-    # Генерируем случайные данные для демонстрации
-    base_value = random.uniform(1e8, 1e10)
-    
-    metrics = {
-        "revenue": base_value,
-        "gross_profit": base_value * random.uniform(0.3, 0.5),
-        "operating_income": base_value * random.uniform(0.1, 0.25),
-        "net_income": base_value * random.uniform(0.05, 0.15),
-        "ebitda": base_value * random.uniform(0.15, 0.3),
-        "eps": random.uniform(1, 10),
-        "pe_ratio": random.uniform(10, 30),
-        "roe": random.uniform(10, 25),
-        "debt_to_equity": random.uniform(0.3, 1.5),
-        "current_ratio": random.uniform(1, 3),
-        "free_cash_flow": base_value * random.uniform(0.05, 0.15)
+    from . import report_parser
+
+    result = await report_parser.parse_report_file(
+        filename=f"report.{file_type}",
+        content=file_content,
+        ticker=ticker,
+    )
+
+    raw_table = result["raw_table"]
+    if not raw_table["rows"]:
+        raise ValueError(
+            "Не удалось извлечь ни одной строки из файла. "
+            "Поддерживаются Excel (.xlsx), CSV, PDF, DOCX, HTML с табличными данными."
+        )
+
+    # Ключевые метрики для совместимости со старым представлением данных
+    key_map = {
+        "revenue": ("выручка",),
+        "gross_profit": ("валовая прибыль",),
+        "operating_income": ("операционная прибыль", "прибыль от продаж"),
+        "net_income": ("чистая прибыль",),
+        "ebitda": ("ebitda",),
     }
-    
-    # Определяем период и дату окончания
-    from datetime import datetime, timedelta
-    
-    if period_type == "quarterly":
-        # Определяем квартал
-        current_month = datetime.now().month
-        current_quarter = (current_month - 1) // 3 + 1
-        period = f"Q{current_quarter} {datetime.now().year}"
-        end_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-    else:
-        period = str(datetime.now().year - 1)
-        end_date = f"{datetime.now().year - 1}-12-31"
-    
+    metrics = {}
+    period = result["period"]
+    for m_key, patterns in key_map.items():
+        for row in raw_table["rows"]:
+            name_l = row["name"].lower()
+            if any(p in name_l for p in patterns):
+                val = row["values"].get(period)
+                if val is None and row["values"]:
+                    val = next(iter(row["values"].values()))
+                if val is not None:
+                    metrics[m_key] = val
+                break
+
     return {
         "period": period,
-        "end_date": end_date,
-        "metrics": metrics
+        "end_date": result["end_date"],
+        "period_type": result.get("period_type") or period_type,
+        "metrics": metrics,
+        "raw_table": raw_table,
+        "rows_count": len(raw_table["rows"]),
     }

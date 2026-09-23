@@ -104,21 +104,24 @@ async def upload_financial_report(
         file_content = await file.read()
         file_type = file.filename.split('.')[-1].lower() if '.' in file.filename else 'unknown'
         
-        # Обрабатываем файл с помощью LLM (или заглушки)
+        # Обрабатываем файл: читаем все строки отчетности (+ LLM при наличии ключа)
         llm_result = await financials_service.process_report_with_llm(
             file_content=file_content,
             file_type=file_type,
             ticker=ticker,
             period_type=period_type
         )
+
+        actual_period_type = llm_result.get("period_type") or period_type
         
-        # Сохраняем данные в БД
+        # Сохраняем данные (включая полную таблицу строк) в БД
         save_result = await financials_service.save_financial_data(
             ticker=ticker,
-            period_type=period_type,
+            period_type=actual_period_type,
             period=llm_result["period"],
             end_date=llm_result["end_date"],
-            metrics=llm_result["metrics"]
+            metrics=llm_result["metrics"],
+            raw_table=llm_result.get("raw_table")
         )
         
         if save_result.get("status") == "error":
@@ -128,10 +131,15 @@ async def upload_financial_report(
             "status": "ok",
             "ticker": ticker,
             "period": llm_result["period"],
+            "period_type": actual_period_type,
             "end_date": llm_result["end_date"],
-            "metrics": llm_result["metrics"]
+            "metrics": llm_result["metrics"],
+            "raw_table": llm_result.get("raw_table"),
+            "rows_count": llm_result.get("rows_count", 0)
         }
         
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

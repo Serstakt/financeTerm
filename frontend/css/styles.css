@@ -1000,6 +1000,17 @@ tv-market-data a[href*="tradingview.com"] { display: none !important; }
   color: #d1d4dc;
 }
 
+/* Числовые ячейки полной таблицы отчета (в стиле smart-lab):
+   отрицательные значения красным, по правому краю */
+.financials-table td.num-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.financials-table td.num-cell.negative {
+  color: #f23645;
+}
+
 .financials-table .period-header {
   color: #787b86;
   font-size: 12px;
