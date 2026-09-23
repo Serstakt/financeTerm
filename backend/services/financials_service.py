@@ -108,8 +108,9 @@ async def get_financial_data(ticker: str, period_type: str = None) -> dict:
             periods = result[ptype]["periods"]
             if ptype == "quarterly":
                 # Сортировка кварталов
+                import re
                 def parse_quarter(p):
-                    match = p.get("period", "").match(/Q(\d+)\s+(\d+)/)
+                    match = re.match(r'Q(\d+)\s+(\d+)', p.get("period", ""))
                     if match:
                         return int(match.group(2)) * 10 + int(match.group(1))
                     return 0
