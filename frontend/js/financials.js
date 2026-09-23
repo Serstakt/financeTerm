@@ -31,7 +31,69 @@ const FinancialsModule = (function() {
         loadTickersFromStorage();
         setupEventListeners();
         renderTickerList();
+        // Загружаем данные для всех тикеров из API
+        loadAllFinancialDataFromAPI();
         console.log('Financials Module initialized');
+    }
+
+    // Загрузка всех данных из API
+    async function loadAllFinancialDataFromAPI() {
+        if (state.tickers.length === 0) return;
+        
+        for (const ticker of state.tickers) {
+            try {
+                const response = await fetch(`/api/financials/${ticker}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Обновляем состояние данными из API
+                    if (!state.financialData[ticker]) {
+                        state.financialData[ticker] = {
+                            quarterly: { periods: [], data: {} },
+                            annual: { periods: [], data: {} }
+                        };
+                    }
+                    
+                    // Merge данных из API
+                    if (data.quarterly && data.quarterly.periods) {
+                        data.quarterly.periods.forEach(p => {
+                            if (!state.financialData[ticker].quarterly.periods.find(ep => ep.period === p.period)) {
+                                state.financialData[ticker].quarterly.periods.push(p);
+                            }
+                        });
+                        // Merge metrics
+                        Object.keys(data.quarterly.data || {}).forEach(metricKey => {
+                            if (!state.financialData[ticker].quarterly.data[metricKey]) {
+                                state.financialData[ticker].quarterly.data[metricKey] = {};
+                            }
+                            Object.assign(state.financialData[ticker].quarterly.data[metricKey], data.quarterly.data[metricKey]);
+                        });
+                    }
+                    
+                    if (data.annual && data.annual.periods) {
+                        data.annual.periods.forEach(p => {
+                            if (!state.financialData[ticker].annual.periods.find(ep => ep.period === p.period)) {
+                                state.financialData[ticker].annual.periods.push(p);
+                            }
+                        });
+                        // Merge metrics
+                        Object.keys(data.annual.data || {}).forEach(metricKey => {
+                            if (!state.financialData[ticker].annual.data[metricKey]) {
+                                state.financialData[ticker].annual.data[metricKey] = {};
+                            }
+                            Object.assign(state.financialData[ticker].annual.data[metricKey], data.annual.data[metricKey]);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error(`Ошибка загрузки данных для ${ticker}:`, error);
+            }
+        }
+        
+        saveFinancialDataToStorage();
+        if (state.selectedTicker) {
+            renderFinancialTable();
+        }
     }
 
     // Загрузка тикеров из localStorage
@@ -333,6 +395,14 @@ const FinancialsModule = (function() {
 // Глобальные функции для HTML
 function setFinancialPeriod(periodType) {
     FinancialsModule.setPeriodType(periodType);
+}
+
+function selectTicker(ticker) {
+    FinancialsModule.selectTicker(ticker);
+}
+
+function removeTicker(ticker, event) {
+    FinancialsModule.removeTicker(ticker, event);
 }
 
 function openUploadReportModal() {
